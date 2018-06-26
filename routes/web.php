@@ -18,9 +18,11 @@ Route::get('/', function () {
 Route::resource('authors','AuthorController');
 Route::post('authorrestore','AuthorController@restore');
 Route::get('authorsdeleted','AuthorController@getdeleted');
+
 Route::resource('genres','GenreController');
 Route::post('genrerestore','GenreController@restore');
 Route::get('genresdeleted','GenreController@getdeleted');
+
 Route::resource('books','BookController');
 Route::get('booklibrarian','BookController@librarian');
 Route::get('booksdeleted','BookController@getdeleted');

@@ -112,7 +112,9 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        //
+        $user = User::find($id);
+        dd($user->book);
+        return response()->json($user);
     }
 
     /**

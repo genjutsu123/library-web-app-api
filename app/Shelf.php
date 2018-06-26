@@ -4,7 +4,8 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Support\Facades\DB;
+use App\Book;
 class Shelf extends Model
 {
     use SoftDeletes;
@@ -13,7 +14,15 @@ class Shelf extends Model
             $data->Book()->delete();
         });
         Shelf::restoring(function($data) {
-            $data->Book()->restore();
+            $books = DB::table('books')->where('shelf_id',$data->id)->pluck('id');
+            $books = Book::withTrashed()->find($books);
+            $books->each(function ($item, $key){
+                $author = DB::table('authors')->where('id',$item->author->id)->where('deleted_at',NULL)->exists();
+                $genre = DB::table('genres')->where('id',$item->genre->id)->where('deleted_at',NULL)->exists();
+                if($author && $genre){
+                    $item->restore();
+                }
+            });
         });
 
     }

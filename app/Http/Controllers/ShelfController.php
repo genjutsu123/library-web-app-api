@@ -27,14 +27,11 @@ class ShelfController extends Controller
 
     public function getdeleted()
     {
-        log::info('shelvegetdeleted');
         $data = DB::table('shelves')->whereNotNull('deleted_at')->pluck('id');
         $data = Shelf::find($data);
-
         $data->each( function ($item, $key){
             $item['books'] = $item->book;
         });
-
         return response()->json($data);
     }
     /**
@@ -44,8 +41,6 @@ class ShelfController extends Controller
      */
     public function create(Request $request)
     {
-        //
-
 
     }
 
@@ -79,7 +74,6 @@ class ShelfController extends Controller
         $shelve = Shelf::find($id);
         $shelve['books'] = $shelve->book;
         return response()->json($shelve);
-
     }
 
     /**
@@ -102,7 +96,7 @@ class ShelfController extends Controller
      */
     public function update(Request $request, $id)
     {
-        Shelf::where('id',$id)->update($request->all());
+        Shelf::where('id',$id)->update($request->except(['books','book']));
         return response()->json($request);
     }
 
@@ -117,7 +111,8 @@ class ShelfController extends Controller
         Shelf::destroy($id);
     }
 
-    public function restore(Request $request){
-        Shelf::onlyTrashed()->find($request->id)->restore();
+    public function restore(Request $request)
+    {
+        Shelf::find($request->id)->restore();
     }
 }

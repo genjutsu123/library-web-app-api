@@ -25,14 +25,11 @@ class GenreController extends Controller
 
     public function getdeleted()
     {
-        log::info('genregetdeleted');
         $data = DB::table('genres')->whereNotNull('deleted_at')->pluck('id');
         $data = Genre::find($data);
-
         $data->each( function ($item, $key){
             $item['books'] = $item->book;
         });
-
         return response()->json($data);
     }
     /**
@@ -53,7 +50,6 @@ class GenreController extends Controller
      */
     public function store(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'name' => 'bail|unique:genres',
         ]);
@@ -98,7 +94,7 @@ class GenreController extends Controller
      */
     public function update(Request $request, $id)
     {
-        Genre::where('id',$id)->update($request->all());
+        Genre::where('id',$id)->update($request->except(['book','books']));
         return response()->json($request);
     }
 
@@ -113,7 +109,8 @@ class GenreController extends Controller
         Genre::destroy($id);
     }
 
-    public function restore(Request $request){
-        Genre::onlyTrashed()->find($request->id)->restore();
+    public function restore(Request $request)
+    {
+        Genre::find($request->id)->restore();
     }
 }

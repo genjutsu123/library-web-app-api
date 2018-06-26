@@ -23,7 +23,7 @@ class User extends Authenticatable
         return $this->belongsTo('App\Role');
     }
     public function Book(){
-        return $this->hasMany('App\Book');
+        return $this->belongsToMany('App\Book');
     }
     /**
      * The attributes that should be hidden for arrays.

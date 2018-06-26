@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Author;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Book;
+use App\BookUser;
 use Validator;
 class BookController extends Controller
 {
@@ -17,13 +19,12 @@ class BookController extends Controller
      */
     public function index()
     {
-        $books = Book::where('deleted_at',NULL)->where('user_id', NULL)->get();
+        $books = Book::where('deleted_at',NULL)->where('stock', '>', 0)->get();
         $books->each( function ($item, $key){
             $item['shelf'] = $item->shelf;
             $item['author'] = $item->author;
             $item['genre'] = $item->genre;
         });
-
         return response()->json($books);
     }
 
@@ -35,17 +36,14 @@ class BookController extends Controller
             $item['author'] = $item->author;
             $item['genre'] = $item->genre;
         });
-
         return response()->json($books);
     }
 
     public function getdeleted()
     {
-        log::info('bookgetdeleted');
         $temp = array();
         $books = Book::onlyTrashed()->get();
         foreach ($books as $item){
-
             $item['shelf'] = $item->shelf;
             $item['author'] = $item->author;
             $item['genre'] = $item->genre;
@@ -66,10 +64,8 @@ class BookController extends Controller
 
         $book = DB::table('books')->orderBy('id','desc')->first();
         $book = Book::find($book->id);
-
         $book['shelf'] = $book->shelf;
         $book['authors'] = $book->author;
-//        dd(response()->json($book));
         return response()->json($book);
     }
     /**
@@ -90,13 +86,15 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-//        $request->except(['_token','date_consent'],'picture');
         $validator = Validator::make($request->all(), [
             'name' => 'bail|unique:books',
-
+            'author_id' => 'bail|required',
+            'genre_id' => 'bail|required',
+            'shelf_id' => 'bail|required',
+            'stock' =>  'bail|required',
         ]);
         if ($validator->fails()){
-            return response("ERROR: Book title already exists!", 500);
+            return response("ERROR: BOOK STORE", 500);
         }else{
             $book = Book::create($request->all());
             $book = Book::find($book->id);
@@ -120,7 +118,6 @@ class BookController extends Controller
         $book['shelf'] = $book->shelf;
         $book['author'] = $book->author;
         $book['genre'] = $book->genre;
-
         return response()->json($book);
     }
 
@@ -144,12 +141,11 @@ class BookController extends Controller
      */
     public function update(Request $request, $id)
     {
-        Book::where('id',$id)->update($request->all());
+        Book::where('id',$id)->update($request->except(['shelf','genre','author']));
         $book = Book::find($id);
         $book['shelf'] = $book->shelf;
         $book['author'] = $book->author;
         $book['genre'] = $book->genre;
-        log::info($book['genre']);
         return response()->json($book);
     }
 
@@ -164,25 +160,48 @@ class BookController extends Controller
         Book::destroy($id);
     }
 
-    public function restore(Request $request){
+    public function restore(Request $request)
+    {
         Book::onlyTrashed()->find($request->id)->restore();
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function borrow(Request $request)
     {
-        log::info($request);
-        Book::where('id',$request->book_id)->update(['user_id' => $request->user_id]);
+        if(Book::where('id',$request->book_id)->value('stock') > 0){
+            $stock = Book::where('id',$request->book_id)->value('stock') - 1;
+            BookUser::create($request->all());
+            Book::where('id',$request->book_id)->update(['stock' => $stock]);
+            $book = Book::find($request->book_id);
+            $book['shelf'] = $book->shelf;
+            $book['author'] = $book->author;
+            $book['genre'] = $book->genre;
+            return response()->json($book);
+        }else{
+            return response('Book stock mismatch please refresh the page',500);
+        }
+
     }
 
     public function return(Request $request)
     {
-        Book::where('id',$request->book_id)->update(['user_id' => NULL]);
+        $stock = Book::where('id',$request->book_id)->value('stock') + 1;
+        BookUser::where('book_id',$request->book_id)->where('user_id',$request->user_id)->delete();
+        Book::where('id',$request->book_id)->update(['stock' => $stock]);
+        $book = Book::find($request->book_id);
+        $book['shelf'] = $book->shelf;
+        $book['author'] = $book->author;
+        $book['genre'] = $book->genre;
+        return response()->json($book);
     }
 
     public function borrowedBooks($id)
     {
-        log::info('borrowedBooks'.$id);
-        $books = Book::where('user_id',$id)->where('deleted_at',NULL)->get();
+        $books = User::find($id);
+        $books = $books->book;
         $books->each( function ($item, $key){
             $item['shelf'] = $item->shelf;
             $item['author'] = $item->author;

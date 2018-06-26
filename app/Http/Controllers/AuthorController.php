@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Author;
+use Illuminate\Support\Facades\Auth;
 use Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,8 @@ class AuthorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index() {
+    public function index()
+    {
         $authors = Author::where('deleted_at', NULL)->get();
         $authors->each(function ($item, $key) {
             $item['books'] = $item->book;
@@ -23,11 +25,8 @@ class AuthorController extends Controller
     }
 
     public function getdeleted() {
-        log::info('authorgetdeleted');
-//        $data = Author::onlyTrashed()->get();
         $data = DB::table('authors')->whereNotNull('deleted_at')->pluck('id');
         $data = Author::find($data);
-
         $data->each(function ($item, $key) {
             $item['books'] = $item->book;
         });
@@ -39,7 +38,8 @@ class AuthorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create() {
+    public function create()
+    {
 
     }
 
@@ -49,7 +49,8 @@ class AuthorController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'name' => 'bail|unique:authors',
         ]);
@@ -67,7 +68,8 @@ class AuthorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id) {
+    public function show($id)
+    {
         $author = Author::find($id);
         $author['books'] = $author->book;
         return response()->json($author);
@@ -79,7 +81,8 @@ class AuthorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id) {
+    public function edit($id)
+    {
         //
     }
 
@@ -90,8 +93,9 @@ class AuthorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id) {
-        Author::where('id',$id)->update($request->all());
+    public function update(Request $request, $id)
+    {
+        Author::where('id',$id)->update($request->except(['books','book']));
         return response()->json($request);
     }
 
@@ -101,11 +105,13 @@ class AuthorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id) {
+    public function destroy($id)
+    {
         Author::destroy($id);
     }
 
-    public function restore(Request $request) {
-        Author::onlyTrashed()->find($request->id)->restore();
+    public function restore(Request $request)
+    {
+        Author::find($request->id)->restore();
     }
 }
