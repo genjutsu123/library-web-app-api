@@ -1,14 +1,23 @@
 ## Getting Started
 
 
-Clone project: 'https://github.com/genjutsu123/library-web-app-api.git'
+Navigate to htdocs directory if you are using xampp or mampp
 
-Navigate to root folder.
+Clone project 'https://github.com/genjutsu123/library-web-app-api.git' 
 
-Install dependencies: 'composer install'
+Navigate to folder 'library-web-app-api'
 
-Create database: 'laravel'
+Install dependencies 'composer install'
 
-Navigate to root folder and setup migration: 'php artisan migrate --seed'
+Create database 'rios-library'
 
-Navigate to root folder and launch web app: 'php artisan serve' 
+Setup migration 'php artisan migrate --seed'
+
+Launch web app 'php artisan serve'
+
+
+## Generated Users
+
+Librarian: admin@admin.com | admin
+
+Normal user: pleb@pleb.com | pleb
